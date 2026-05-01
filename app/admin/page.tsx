@@ -70,13 +70,25 @@ export default function AdminPage() {
     if (authed) loadItems();
   }, [authed, loadItems]);
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setAuthError('');
     if (!password.trim()) {
       setAuthError('Please enter a password.');
       return;
     }
+
+    // Validate credentials against the server before accepting the login
+    const res = await fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${password}` },
+    });
+
+    if (!res.ok) {
+      setAuthError('Incorrect password.');
+      return;
+    }
+
     sessionStorage.setItem(SESSION_KEY, password);
     setAuthed(true);
   }

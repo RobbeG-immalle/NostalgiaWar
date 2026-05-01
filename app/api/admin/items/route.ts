@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-
-function checkAuth(request: NextRequest): boolean {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword) return false;
-  const auth = request.headers.get('Authorization');
-  return auth === `Bearer ${adminPassword}`;
-}
+import { checkAuth } from '@/lib/adminAuth';
 
 export async function GET(request: NextRequest) {
   if (!checkAuth(request)) {
