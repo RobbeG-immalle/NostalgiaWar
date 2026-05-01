@@ -19,6 +19,82 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const SESSION_KEY = 'nostalgia_admin_pw';
 
+type CsvUploadItem = {
+  category: string;
+  title: string;
+  youtube_url: string;
+};
+
+type BulkUploadResponse = {
+  inserted: Item[];
+  skipped: Array<CsvUploadItem & { reason: string }>;
+};
+
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index];
+    const nextChar = line[index + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        index++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
+function parseBulkCsv(csv: string): CsvUploadItem[] {
+  const lines = csv
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length < 2) {
+    throw new Error('CSV must include a header row and at least one item.');
+  }
+
+  const header = parseCsvLine(lines[0]).map((column) => column.toLowerCase());
+  const categoryIndex = header.indexOf('category');
+  const titleIndex = header.indexOf('title');
+  const youtubeUrlIndex = header.indexOf('youtube_url');
+
+  if (categoryIndex === -1 || titleIndex === -1 || youtubeUrlIndex === -1) {
+    throw new Error('CSV header must be: category,title,youtube_url');
+  }
+
+  return lines.slice(1).map((line, rowIndex) => {
+    const columns = parseCsvLine(line);
+    const category = columns[categoryIndex]?.trim() ?? '';
+    const title = columns[titleIndex]?.trim() ?? '';
+    const youtube_url = columns[youtubeUrlIndex]?.trim() ?? '';
+
+    if (!category || !title || !youtube_url) {
+      throw new Error(`Row ${rowIndex + 2} is missing one or more required values.`);
+    }
+
+    return { category, title, youtube_url };
+  });
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [authed, setAuthed] = useState(false);
@@ -34,6 +110,11 @@ export default function AdminPage() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
   const [addSuccess, setAddSuccess] = useState('');
+  const [bulkCsv, setBulkCsv] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkError, setBulkError] = useState('');
+  const [bulkSuccess, setBulkSuccess] = useState('');
+  const [bulkSkipped, setBulkSkipped] = useState<Array<CsvUploadItem & { reason: string }>>([]);
 
   // Restore saved password from sessionStorage
   useEffect(() => {
@@ -149,6 +230,61 @@ export default function AdminPage() {
     setAddSuccess(`"${newItem.title}" added successfully!`);
   }
 
+  async function handleCsvFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    setBulkCsv(text);
+    e.target.value = '';
+  }
+
+  async function handleBulkUpload(e: React.FormEvent) {
+    e.preventDefault();
+    setBulkError('');
+    setBulkSuccess('');
+    setBulkSkipped([]);
+
+    let parsedItems: CsvUploadItem[];
+    try {
+      parsedItems = parseBulkCsv(bulkCsv);
+    } catch (error) {
+      setBulkError(error instanceof Error ? error.message : 'Failed to parse CSV.');
+      return;
+    }
+
+    setBulkUploading(true);
+    const res = await fetch('/api/admin/items', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ items: parsedItems }),
+    });
+    setBulkUploading(false);
+
+    const payload = await res.json().catch(() => null);
+    if (!res.ok || !payload) {
+      setBulkError((payload as { error?: string } | null)?.error || 'Bulk upload failed.');
+      return;
+    }
+
+    const result = payload as BulkUploadResponse;
+    setItems((prev) =>
+      [...prev, ...result.inserted].sort(
+        (a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title)
+      )
+    );
+    setBulkSkipped(result.skipped);
+    setBulkSuccess(
+      `Added ${result.inserted.length} item${result.inserted.length === 1 ? '' : 's'}${
+        result.skipped.length ? `, skipped ${result.skipped.length} duplicate/invalid row${result.skipped.length === 1 ? '' : 's'}` : ''
+      }.`
+    );
+
+    if (result.inserted.length > 0) {
+      setBulkCsv('');
+    }
+  }
+
   // ─── Login screen ──────────────────────────────────────────────────────────
   if (!authed) {
     return (
@@ -259,6 +395,60 @@ export default function AdminPage() {
               {adding ? 'Adding…' : 'Add video'}
             </button>
           </form>
+        </section>
+
+        <section className="bg-gray-900 border border-white/10 rounded-2xl p-6 space-y-5">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white/90">Bulk upload CSV</h2>
+              <p className="text-sm text-white/40">
+                Paste CSV or load a file with: <span className="font-mono">category,title,youtube_url</span>
+              </p>
+            </div>
+            <label className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+              Choose CSV file
+              <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleCsvFileChange} />
+            </label>
+          </div>
+
+          {bulkError && <p className="text-red-400 text-sm">{bulkError}</p>}
+          {bulkSuccess && <p className="text-green-400 text-sm">{bulkSuccess}</p>}
+
+          <form onSubmit={handleBulkUpload} className="space-y-4">
+            <textarea
+              value={bulkCsv}
+              onChange={(e) => setBulkCsv(e.target.value)}
+              rows={12}
+              placeholder={['category,title,youtube_url', 'Video Games,Call of Duty Black Ops Main Theme,https://www.youtube.com/watch?v=Zxnx3W-HA18'].join('\n')}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/25 focus:outline-none focus:border-purple-500 transition-colors"
+            />
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-white/35">
+                Existing rows and duplicates inside the same CSV are skipped automatically.
+              </p>
+              <button
+                type="submit"
+                disabled={bulkUploading}
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                {bulkUploading ? 'Uploading…' : 'Upload CSV'}
+              </button>
+            </div>
+          </form>
+
+          {bulkSkipped.length > 0 && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 space-y-2">
+              <h3 className="text-sm font-semibold text-amber-200">Skipped rows</h3>
+              <ul className="space-y-1 text-xs text-amber-100/80 max-h-40 overflow-y-auto pr-1">
+                {bulkSkipped.map((item, index) => (
+                  <li key={`${item.title}-${item.youtube_url}-${index}`}>
+                    {item.title || 'Untitled'} ({item.category || 'unknown'}) - {item.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         {/* ── Video list ── */}
