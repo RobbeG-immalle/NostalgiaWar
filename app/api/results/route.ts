@@ -34,12 +34,12 @@ export async function GET(request: NextRequest) {
       itemA: {
         item: itemARes.data,
         votes: votesForA,
-        percentage: total > 0 ? Math.round((votesForA / total) * 100) : 50,
+        percentage: total > 0 ? Math.round((votesForA / total) * 100) : 0,
       },
       itemB: {
         item: itemBRes.data,
         votes: votesForB,
-        percentage: total > 0 ? Math.round((votesForB / total) * 100) : 50,
+        percentage: total > 0 ? Math.round((votesForB / total) * 100) : 0,
       },
       total,
     };

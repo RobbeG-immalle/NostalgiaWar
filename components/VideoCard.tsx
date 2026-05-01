@@ -15,9 +15,9 @@ function getYouTubeEmbedUrl(url: string): string {
   try {
     const urlObj = new URL(url);
     let videoId = '';
-    if (urlObj.hostname.includes('youtube.com')) {
+    if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
       videoId = urlObj.searchParams.get('v') || '';
-    } else if (urlObj.hostname.includes('youtu.be')) {
+    } else if (urlObj.hostname === 'youtu.be') {
       videoId = urlObj.pathname.slice(1);
     }
     return videoId
