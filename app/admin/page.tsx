@@ -114,7 +114,19 @@ export default function AdminPage() {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkError, setBulkError] = useState('');
   const [bulkSuccess, setBulkSuccess] = useState('');
-  const [bulkSkipped, setBulkSkipped] = useState<Array<CsvUploadItem & { reason: string }>>([]);
+  const [bulkSkipped, setBulkSkipped] = useState<Array<CsvUploadItem & { reason: string }>>([])
+
+  // Broken link checker state
+  type BrokenItem = { id: string; title: string; youtube_url: string; category: string };
+  const [checkingLinks, setCheckingLinks] = useState(false);
+  const [brokenItems, setBrokenItems] = useState<BrokenItem[] | null>(null);
+  const [checkError, setCheckError] = useState('');
+
+  // Reports state
+  type ReportedItem = { item: { id: string; title: string; youtube_url: string; category: string }; count: number };
+  const [reportedItems, setReportedItems] = useState<ReportedItem[] | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState('');;
 
   // Restore saved password from sessionStorage
   useEffect(() => {
@@ -230,6 +242,56 @@ export default function AdminPage() {
     setAddSuccess(`"${newItem.title}" added successfully!`);
   }
 
+  async function handleCheckLinks() {
+    setCheckingLinks(true);
+    setCheckError('');
+    setBrokenItems(null);
+
+    const res = await fetch('/api/admin/check-links', { headers: authHeaders() });
+    setCheckingLinks(false);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setCheckError((err as { error?: string }).error || 'Check failed.');
+      return;
+    }
+
+    const { broken } = await res.json() as { broken: BrokenItem[]; total: number };
+    setBrokenItems(broken);
+  }
+
+  async function handleLoadReports() {
+    setReportsLoading(true);
+    setReportsError('');
+
+    const res = await fetch('/api/admin/reports', { headers: authHeaders() });
+    setReportsLoading(false);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setReportsError((err as { error?: string }).error || 'Failed to load reports.');
+      return;
+    }
+
+    const data = await res.json() as ReportedItem[];
+    setReportedItems(data);
+  }
+
+  async function handleDeleteBroken(id: string) {
+    setDeleting(id);
+    const res = await fetch(`/api/admin/items/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    setDeleting(null);
+    if (!res.ok) {
+      alert('Failed to delete item.');
+      return;
+    }
+    setItems((prev) => prev.filter((item) => item.id !== id));
+    setBrokenItems((prev) => prev?.filter((item) => item.id !== id) ?? null);
+  }
+
   async function handleCsvFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -326,11 +388,10 @@ export default function AdminPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🕹️</span>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Nostalgia War — Admin
-            </h1>
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Nostalgia War" className="h-10 w-auto" />
+            <span className="text-sm font-semibold text-white/50 border border-white/10 rounded-md px-2 py-0.5">Admin</span>
           </div>
           <button
             onClick={handleLogout}
@@ -447,6 +508,126 @@ export default function AdminPage() {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+        </section>
+
+        {/* ── Broken link checker ── */}
+        <section className="bg-gray-900 border border-white/10 rounded-2xl p-6 space-y-5">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white/90">Check broken links</h2>
+              <p className="text-sm text-white/40">Finds videos that are deleted, private, or unavailable on YouTube.</p>
+            </div>
+            <button
+              onClick={handleCheckLinks}
+              disabled={checkingLinks}
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              {checkingLinks ? 'Checking…' : 'Run check'}
+            </button>
+          </div>
+
+          {checkError && <p className="text-red-400 text-sm">{checkError}</p>}
+
+          {brokenItems !== null && brokenItems.length === 0 && (
+            <p className="text-green-400 text-sm">All links are working.</p>
+          )}
+
+          {brokenItems && brokenItems.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-amber-400 text-sm">{brokenItems.length} broken link{brokenItems.length === 1 ? '' : 's'} found.</p>
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 divide-y divide-white/5 overflow-hidden">
+                {brokenItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between px-4 py-3 gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm text-white/90 font-medium truncate">{item.title}</p>
+                      <a
+                        href={item.youtube_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-red-400 hover:text-red-300 underline underline-offset-2 truncate block max-w-xs"
+                      >
+                        {item.youtube_url}
+                      </a>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteBroken(item.id)}
+                      disabled={deleting === item.id}
+                      className="shrink-0 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 disabled:opacity-40 text-red-400 text-xs font-medium rounded-lg border border-red-500/20 transition-colors"
+                    >
+                      {deleting === item.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ── User reports ── */}
+        <section className="bg-gray-900 border border-white/10 rounded-2xl p-6 space-y-5">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white/90">User reports</h2>
+              <p className="text-sm text-white/40">Videos flagged by users as broken or incorrect.</p>
+            </div>
+            <button
+              onClick={handleLoadReports}
+              disabled={reportsLoading}
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              {reportsLoading ? 'Loading…' : 'Load reports'}
+            </button>
+          </div>
+
+          {reportsError && <p className="text-red-400 text-sm">{reportsError}</p>}
+
+          {reportedItems !== null && reportedItems.length === 0 && (
+            <p className="text-white/40 text-sm">No reports yet.</p>
+          )}
+
+          {reportedItems && reportedItems.length > 0 && (
+            <div className="rounded-xl border border-white/10 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-white/40 text-xs uppercase tracking-wide">
+                    <th className="text-left px-5 py-3">Title</th>
+                    <th className="text-left px-5 py-3 hidden sm:table-cell">Category</th>
+                    <th className="text-center px-5 py-3">Reports</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportedItems.map(({ item, count }, i) => (
+                    <tr
+                      key={item.id}
+                      className={`border-b border-white/5 last:border-0 ${
+                        i % 2 === 0 ? '' : 'bg-white/[0.02]'
+                      }`}
+                    >
+                      <td className="px-5 py-3 text-white/90 font-medium max-w-[200px] truncate">{item.title}</td>
+                      <td className="px-5 py-3 hidden sm:table-cell text-white/50">{CATEGORY_LABELS[item.category] ?? item.category}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`inline-block font-bold px-2 py-0.5 rounded-md text-xs ${
+                          count >= 3 ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/15 text-amber-400'
+                        }`}>
+                          {count}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          disabled={deleting === item.id}
+                          className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 disabled:opacity-40 text-red-400 text-xs font-medium rounded-lg border border-red-500/20 transition-colors"
+                        >
+                          {deleting === item.id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>

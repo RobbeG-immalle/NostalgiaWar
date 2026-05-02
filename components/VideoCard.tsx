@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Item } from '@/lib/types';
 
 interface VideoCardProps {
   item: Item;
   onVote: () => void;
+  onReport?: (itemId: string) => void;
   disabled: boolean;
   isWinner?: boolean;
   percentage?: number;
@@ -31,12 +33,30 @@ function getYouTubeEmbedUrl(url: string): string {
 export function VideoCard({
   item,
   onVote,
+  onReport,
   disabled,
   isWinner,
   percentage,
   showResults,
 }: VideoCardProps) {
   const embedUrl = getYouTubeEmbedUrl(item.youtube_url);
+  const [reported, setReported] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  function handleReportClick() {
+    if (reported) return;
+    setConfirming(true);
+  }
+
+  function handleReportConfirm() {
+    setConfirming(false);
+    setReported(true);
+    onReport?.(item.id);
+  }
+
+  function handleReportCancel() {
+    setConfirming(false);
+  }
 
   return (
     <div
@@ -89,6 +109,32 @@ export function VideoCard({
         >
           {showResults ? (isWinner ? '🏆 Winner' : 'Lost') : '🎮 This one!'}
         </button>
+
+        {confirming ? (
+          <div className="flex items-center justify-center gap-3 text-xs">
+            <span className="text-white/50">Report this video?</span>
+            <button
+              onClick={handleReportConfirm}
+              className="text-red-400 hover:text-red-300 font-medium transition-colors"
+            >
+              Yes, report
+            </button>
+            <button
+              onClick={handleReportCancel}
+              className="text-white/30 hover:text-white/60 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleReportClick}
+            disabled={reported}
+            className="text-xs text-white/25 hover:text-white/50 disabled:text-white/20 disabled:cursor-default transition-colors"
+          >
+            {reported ? '⚑ Reported' : '⚐ Report video'}
+          </button>
+        )}
       </div>
     </div>
   );

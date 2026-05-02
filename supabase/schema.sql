@@ -20,6 +20,17 @@ create table if not exists votes (
   created_at timestamptz default now()
 );
 
+-- Reports table
+create table if not exists reports (
+  id uuid primary key default gen_random_uuid(),
+  item_id uuid not null references items(id) on delete cascade,
+  session_id text,
+  reason text not null default 'broken_or_incorrect',
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_reports_item_id on reports(item_id);
+
 -- Indexes
 create index if not exists idx_votes_items on votes(item_a_id, item_b_id);
 create index if not exists idx_items_category on items(category);

@@ -19,6 +19,19 @@ export default function Home() {
   const showResults = state === 'results';
   const disabled = isLoading || showResults;
 
+  function handleReport(itemId: string) {
+    const sessionId =
+      typeof window !== 'undefined'
+        ? (localStorage.getItem('nostalgia_war_session_id') ?? undefined)
+        : undefined;
+
+    fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_id: itemId, session_id: sessionId, reason: 'broken' }),
+    }).catch(() => null);
+  }
+
   const winnerIsA =
     results && results.itemA.percentage > results.itemB.percentage;
   const winnerIsB =
@@ -29,11 +42,9 @@ export default function Home() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex items-center gap-2 mr-auto">
-            <span className="text-2xl">🕹️</span>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Nostalgia War
-            </h1>
+          <div className="flex items-center mr-auto">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Nostalgia War" className="h-12 w-auto" />
           </div>
           <CategorySelector value={category} onChange={handleCategoryChange} />
         </div>
@@ -88,6 +99,7 @@ export default function Home() {
               <VideoCard
                 item={pair.itemA}
                 onVote={() => submitVote(pair.itemA.id)}
+                onReport={handleReport}
                 disabled={disabled}
                 isWinner={showResults ? !!winnerIsA : undefined}
                 percentage={results?.itemA.percentage}
@@ -96,6 +108,7 @@ export default function Home() {
               <VideoCard
                 item={pair.itemB}
                 onVote={() => submitVote(pair.itemB.id)}
+                onReport={handleReport}
                 disabled={disabled}
                 isWinner={showResults ? !!winnerIsB : undefined}
                 percentage={results?.itemB.percentage}
