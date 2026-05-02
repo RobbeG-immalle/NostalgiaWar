@@ -22,8 +22,8 @@ export function CategorySelector({ value, onChange }: CategorySelectorProps) {
           onClick={() => onChange(cat.value)}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
             value === cat.value
-              ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-              : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+              ? 'bg-gradient-to-r from-[#00a6ff] to-[#ff2d55] text-white shadow-lg shadow-[#ff2d55]/30'
+              : 'bg-black/30 border border-white/10 text-white/80 hover:border-[#ffb347]/60 hover:text-white'
           }`}
         >
           {cat.label}

@@ -38,13 +38,14 @@ export default function Home() {
     results && results.itemB.percentage > results.itemA.percentage;
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen text-white relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 nw-scanlines opacity-30" />
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur-md border-b border-white/5">
+      <div className="sticky top-0 z-10 bg-[#080d18]/80 backdrop-blur-md border-b border-white/10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center gap-3">
           <div className="flex items-center mr-auto">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Nostalgia War" className="h-12 w-auto" />
+            <img src="/logo.png" alt="Nostalgia War" className="h-20 w-auto mix-blend-screen" />
           </div>
           <CategorySelector value={category} onChange={handleCategoryChange} />
         </div>
@@ -53,11 +54,11 @@ export default function Home() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* Tagline */}
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white/90">
-            Can you feel the nostalgia?
+        <div className="text-center space-y-2 relative">
+          <h2 className="text-2xl sm:text-3xl font-black text-white/95 nw-glow-text tracking-wide">
+            NOSTALGIA WAR
           </h2>
-          <p className="text-white/40 text-sm">
+          <p className="text-white/55 text-sm uppercase tracking-[0.2em]">
             Vote for the most nostalgic video
           </p>
         </div>
@@ -80,7 +81,7 @@ export default function Home() {
             <p className="text-red-400 text-sm mb-3">{error}</p>
             <button
               onClick={loadPair}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors"
+              className="px-4 py-2 bg-[#ff2d55]/20 hover:bg-[#ff2d55]/30 border border-[#ff2d55]/40 rounded-lg text-sm transition-colors"
             >
               Try again
             </button>
@@ -123,7 +124,7 @@ export default function Home() {
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-4">
               <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/20" />
-              <span className="text-white/30 font-bold text-sm tracking-widest">VS</span>
+              <span className="text-[#ffb347] font-black text-sm tracking-[0.35em] nw-glow-text">VS</span>
               <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/20" />
             </div>
           </div>
@@ -134,7 +135,7 @@ export default function Home() {
           <div className="text-center">
             <button
               onClick={loadPair}
-              className="text-white/30 hover:text-white/60 text-sm transition-colors"
+              className="text-[#00a6ff]/70 hover:text-[#00a6ff] text-sm transition-colors"
             >
               Skip this pair →
             </button>
@@ -143,7 +144,7 @@ export default function Home() {
 
         {/* Auto-advance indicator */}
         {showResults && (
-          <div className="text-center text-white/30 text-sm animate-pulse">
+          <div className="text-center text-[#00a6ff]/80 text-sm animate-pulse uppercase tracking-[0.2em]">
             Loading next pair...
           </div>
         )}

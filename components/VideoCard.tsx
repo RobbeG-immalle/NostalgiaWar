@@ -62,9 +62,9 @@ export function VideoCard({
     <div
       className={`flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 ${
         showResults && isWinner
-          ? 'border-purple-500 shadow-lg shadow-purple-500/20 scale-[1.02]'
+          ? 'border-[#ffb347] shadow-lg shadow-[#ff6f61]/30 scale-[1.02]'
           : 'border-white/10'
-      } bg-white/5 backdrop-blur-sm`}
+      } bg-black/35 backdrop-blur-sm`}
     >
       <div className="relative w-full aspect-video bg-black">
         <iframe
@@ -83,14 +83,14 @@ export function VideoCard({
           <div className="space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-white/60">Nostalgia votes</span>
-              <span className={`font-bold ${isWinner ? 'text-purple-400' : 'text-white/60'}`}>
+              <span className={`font-bold ${isWinner ? 'text-[#ffb347]' : 'text-white/60'}`}>
                 {percentage}%
               </span>
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-700 ease-out ${
-                  isWinner ? 'bg-purple-500' : 'bg-white/30'
+                  isWinner ? 'bg-gradient-to-r from-[#ff7a18] to-[#ff2d55]' : 'bg-white/30'
                 }`}
                 style={{ width: `${percentage}%` }}
               />
@@ -104,10 +104,10 @@ export function VideoCard({
           className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 ${
             disabled
               ? 'bg-white/10 text-white/30 cursor-not-allowed'
-              : 'bg-purple-600 hover:bg-purple-500 active:scale-95 text-white shadow-lg hover:shadow-purple-500/25 cursor-pointer'
+              : 'bg-gradient-to-r from-[#0077ff] via-[#00a6ff] to-[#00c2ff] hover:brightness-110 active:scale-95 text-white shadow-lg hover:shadow-[#00a6ff]/30 cursor-pointer'
           }`}
         >
-          {showResults ? (isWinner ? '🏆 Winner' : 'Lost') : 'Vote!'}
+          {showResults ? (isWinner ? '🏆 Winner' : 'Lost') : 'Vote'}
         </button>
 
         {confirming ? (
@@ -115,7 +115,7 @@ export function VideoCard({
             <span className="text-white/50">Report this video?</span>
             <button
               onClick={handleReportConfirm}
-              className="text-red-400 hover:text-red-300 font-medium transition-colors"
+              className="text-[#ff6f61] hover:text-[#ff8a7a] font-medium transition-colors"
             >
               Yes, report
             </button>

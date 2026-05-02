@@ -390,7 +390,7 @@ export default function AdminPage() {
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Nostalgia War" className="h-10 w-auto" />
+            <img src="/logo.png" alt="Nostalgia War" className="h-10 w-auto mix-blend-screen" />
             <span className="text-sm font-semibold text-white/50 border border-white/10 rounded-md px-2 py-0.5">Admin</span>
           </div>
           <button

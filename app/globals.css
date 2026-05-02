@@ -3,7 +3,46 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --nw-blue: #00a6ff;
+    --nw-red: #ff2d55;
+    --nw-amber: #ffb347;
+    --nw-ink: #060912;
+  }
+
   * {
     box-sizing: border-box;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 450px at 8% -10%, rgba(0, 166, 255, 0.18), transparent 58%),
+      radial-gradient(1100px 420px at 96% -15%, rgba(255, 45, 85, 0.2), transparent 60%),
+      linear-gradient(180deg, #090d1a 0%, #05070e 55%, #04060b 100%);
+  }
+}
+
+@layer utilities {
+  .nw-scanlines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.03) 0,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  }
+
+  .nw-logo-halo {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.07),
+      0 0 32px rgba(0, 166, 255, 0.2),
+      0 0 42px rgba(255, 45, 85, 0.2);
+  }
+
+  .nw-glow-text {
+    text-shadow:
+      0 0 16px rgba(0, 166, 255, 0.28),
+      0 0 20px rgba(255, 45, 85, 0.24);
   }
 }
