@@ -107,7 +107,7 @@ export function VideoCard({
               : 'bg-purple-600 hover:bg-purple-500 active:scale-95 text-white shadow-lg hover:shadow-purple-500/25 cursor-pointer'
           }`}
         >
-          {showResults ? (isWinner ? '🏆 Winner' : 'Lost') : '🎮 This one!'}
+          {showResults ? (isWinner ? '🏆 Winner' : 'Lost') : 'Vote!'}
         </button>
 
         {confirming ? (

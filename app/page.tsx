@@ -55,7 +55,7 @@ export default function Home() {
         {/* Tagline */}
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-white/90">
-            Which hits harder?
+            Can you feel the nostalgia?
           </h2>
           <p className="text-white/40 text-sm">
             Vote for the most nostalgic video

@@ -4,6 +4,11 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Nostalgia War',
   description: 'Vote for the most nostalgic video!',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
