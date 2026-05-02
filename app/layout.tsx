@@ -5,6 +5,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Nostalgia War',
   description: 'Vote for the most nostalgic video!',
+  other: {
+    'google-adsense-account': 'ca-pub-8943487538270573',
+  },
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
