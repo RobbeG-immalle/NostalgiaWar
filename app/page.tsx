@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CategorySelector } from '@/components/CategorySelector';
 import { VideoCard } from '@/components/VideoCard';
 import { SkeletonCard } from '@/components/SkeletonCard';
@@ -18,6 +18,15 @@ export default function Home() {
   const isLoading = state === 'loading';
   const showResults = state === 'results';
   const disabled = isLoading || showResults;
+
+  useEffect(() => {
+    try {
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+    } catch (e) {
+      // AdSense not loaded yet
+    }
+  }, []);
 
   function handleReport(itemId: string) {
     const sessionId =
@@ -48,6 +57,20 @@ export default function Home() {
             <img src="/logo.png" alt="Nostalgia War" className="h-20 w-auto mix-blend-screen" />
           </div>
           <CategorySelector value={category} onChange={handleCategoryChange} />
+        </div>
+      </div>
+
+      {/* AD: Leaderboard banner */}
+      <div className="w-full bg-[#080d18] border-b border-white/5 py-2 px-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-center">
+          <ins
+            className="adsbygoogle"
+            style={{ display: 'block' }}
+            data-ad-client="ca-pub-8943487538270573"
+            data-ad-slot="LEADERBOARD_SLOT_ID"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
         </div>
       </div>
 
@@ -117,6 +140,18 @@ export default function Home() {
               />
             </>
           ) : null}
+        </div>
+
+        {/* AD: Rectangle */}
+        <div className="flex justify-center">
+          <ins
+            className="adsbygoogle"
+            style={{ display: 'block' }}
+            data-ad-client="ca-pub-8943487538270573"
+            data-ad-slot="RECTANGLE_SLOT_ID"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
         </div>
 
         {/* VS divider */}
