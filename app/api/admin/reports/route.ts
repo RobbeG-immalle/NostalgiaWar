@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
   >();
 
   for (const row of data ?? []) {
-    const item = row.items as { id: string; title: string; youtube_url: string; category: string } | null;
+    const rawItem = row.items as unknown;
+    const item = Array.isArray(rawItem)
+      ? (rawItem[0] as { id: string; title: string; youtube_url: string; category: string } | undefined)
+      : (rawItem as { id: string; title: string; youtube_url: string; category: string } | null);
+
     if (!item) continue;
 
     const existing = map.get(item.id);

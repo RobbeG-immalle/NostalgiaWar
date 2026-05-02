@@ -125,7 +125,7 @@ async function insertItems(inputs: AdminItemInput[]): Promise<
 > {
   const existing = await buildExistingKeys();
   if ('error' in existing) {
-    return { error: existing.error };
+    return { error: existing.error ?? 'Failed to load existing items' };
   }
 
   const pendingKeys = existing.keys;
