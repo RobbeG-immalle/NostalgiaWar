@@ -16,6 +16,7 @@ export interface Player {
   name: string;
   score: number;
   is_host: boolean;
+  is_bot: boolean;
   joined_at: string;
 }
 

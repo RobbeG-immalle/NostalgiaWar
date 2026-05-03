@@ -21,8 +21,12 @@ create table if not exists players (
   name       text not null,
   score      int not null default 0,
   is_host    boolean not null default false,
+  is_bot     boolean not null default false,
   joined_at  timestamptz not null default now()
 );
+
+-- Migration: add is_bot column if upgrading an existing database
+-- alter table players add column if not exists is_bot boolean not null default false;
 
 -- Rounds
 create table if not exists rounds (
