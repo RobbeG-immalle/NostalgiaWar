@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   const { data: existingPlayers } = await supabase
     .from('players')
-    .select('id, is_bot')
+    .select('is_bot')
     .eq('lobby_id', lobbyId);
 
   const all = existingPlayers ?? [];
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   }
 
   const botCount = all.filter((p: { is_bot: boolean }) => p.is_bot).length;
-  const botName = BOT_NAMES[botCount % BOT_NAMES.length] ?? `Bot ${botCount + 1}`;
+  const botName = BOT_NAMES[botCount % BOT_NAMES.length];
 
   const { data: bot, error: botErr } = await supabase
     .from('players')
