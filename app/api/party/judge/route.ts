@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (!winnerPlayer) {
-    return NextResponse.json({ error: 'Winner player not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Invalid winner selection' }, { status: 404 });
   }
 
   const newScore = winnerPlayer.score + 1;

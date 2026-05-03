@@ -113,10 +113,13 @@ export default function GamePage() {
 
   // ── countdown timer ───────────────────────────────────────────────────────
 
+  const roundId = round?.id;
+  const roundStatus = round?.status;
+
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
 
-    if (round?.status === 'submitting') {
+    if (roundStatus === 'submitting') {
       setTimer(SUBMIT_SECONDS);
       timerRef.current = setInterval(() => {
         setTimer((t) => Math.max(0, t - 1));
@@ -126,8 +129,7 @@ export default function GamePage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round?.id, round?.status]);
+  }, [roundId, roundStatus]);
 
   // ── realtime subscriptions ────────────────────────────────────────────────
 
