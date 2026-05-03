@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     .select('id', { count: 'exact', head: true })
     .eq('round_id', roundId);
 
-  if ((submissionCount ?? 0) >= (playerCount ?? 1)) {
+  if ((playerCount ?? 0) > 0 && (submissionCount ?? 0) >= (playerCount ?? 0)) {
     await supabase
       .from('rounds')
       .update({ status: 'judging' })
