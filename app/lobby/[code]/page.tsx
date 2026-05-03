@@ -212,7 +212,7 @@ export default function LobbyPage() {
                 className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/5"
               >
                 <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0077ff] to-[#00c2ff] flex items-center justify-center text-xs font-bold shrink-0">
-                  {p.name[0].toUpperCase()}
+                  {p.name[0]?.toUpperCase() ?? '?'}
                 </span>
                 <span className="flex-1 text-sm font-medium">{p.name}</span>
                 {p.is_host && (

@@ -314,7 +314,7 @@ export default function GamePage() {
           </h1>
           <p className="text-white/60 text-lg">
             {winner?.name} wins with {winner?.score} point
-            {winner?.score !== 1 ? 's' : ''}!
+            {(winner?.score ?? 0) !== 1 ? 's' : ''}!
           </p>
 
           {/* Final scoreboard */}
@@ -678,11 +678,9 @@ export default function GamePage() {
                       <div
                         className="h-full bg-[#00a6ff] rounded-full transition-all duration-500"
                         style={{
-                          width: `${
-                            ((p.score / (lobby?.max_score ?? 5)) * 100).toFixed(
-                              0
-                            )
-                          }%`,
+                          width: `${Math.round(
+                            (p.score / (lobby?.max_score ?? 5)) * 100
+                          )}%`,
                         }}
                       />
                     </div>
