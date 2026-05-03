@@ -11,6 +11,9 @@ function generateCode(): string {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const hostName: string = body?.hostName ?? '';
+  const maxScore: number = Number.isInteger(body?.maxScore) && body.maxScore >= 1
+    ? Math.min(body.maxScore, 50)
+    : 5;
 
   if (!hostName.trim()) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   const { data: lobby, error: lobbyErr } = await supabase
     .from('lobbies')
-    .insert({ code })
+    .insert({ code, max_score: maxScore })
     .select()
     .single();
 

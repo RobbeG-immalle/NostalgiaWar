@@ -8,6 +8,7 @@ export default function MultiplayerPage() {
   const router = useRouter();
 
   const [hostName, setHostName] = useState('');
+  const [maxScore, setMaxScore] = useState(5);
   const [joinCode, setJoinCode] = useState('');
   const [joinName, setJoinName] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
@@ -22,7 +23,7 @@ export default function MultiplayerPage() {
       const res = await fetch('/api/party/create-lobby', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostName }),
+        body: JSON.stringify({ hostName, maxScore }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -113,6 +114,25 @@ export default function MultiplayerPage() {
               maxLength={20}
               className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00a6ff]/50 text-sm"
             />
+            <div className="space-y-1">
+              <label className="text-white/50 text-xs uppercase tracking-widest">Points to win</label>
+              <div className="flex gap-2">
+                {[3, 5, 7, 10].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setMaxScore(n)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                      maxScore === n
+                        ? 'bg-[#00a6ff]/20 border-[#00a6ff] text-[#00a6ff]'
+                        : 'bg-white/5 border-white/15 text-white/50 hover:border-white/30'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               onClick={handleCreate}
               disabled={createLoading || !hostName.trim()}
