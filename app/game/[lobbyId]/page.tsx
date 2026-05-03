@@ -40,6 +40,29 @@ function isValidYouTubeUrl(url: string): boolean {
 
 const SUBMIT_SECONDS = 60;
 
+// ─── bot helpers ─────────────────────────────────────────────────────────────
+
+const BOT_YOUTUBE_URLS = [
+  'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  'https://www.youtube.com/watch?v=9bZkp7q19f0',
+  'https://www.youtube.com/watch?v=fRh_vgS2dFE',
+  'https://www.youtube.com/watch?v=L_jWHffIx5E',
+  'https://www.youtube.com/watch?v=1G4isv_Fylg',
+  'https://www.youtube.com/watch?v=8wM5bJWzL0s',
+  'https://www.youtube.com/watch?v=rSy9ByGRlQ8',
+  'https://www.youtube.com/watch?v=kffacxfA7G4',
+];
+
+const BOT_SUBMIT_BASE_DELAY_MS = 2000;
+const BOT_SUBMIT_STAGGER_MS = 1500;
+const BOT_SUBMIT_JITTER_MS = 2000;
+const BOT_JUDGE_BASE_DELAY_MS = 3000;
+const BOT_JUDGE_JITTER_MS = 2000;
+
+function pickBotUrl(): string {
+  return BOT_YOUTUBE_URLS[Math.floor(Math.random() * BOT_YOUTUBE_URLS.length)];
+}
+
 // ─── component ──────────────────────────────────────────────────────────────
 
 export default function GamePage() {
@@ -61,6 +84,7 @@ export default function GamePage() {
 
   const [timer, setTimer] = useState(SUBMIT_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const botActionsRef = useRef<Set<string>>(new Set());
 
   // ── initial load ──────────────────────────────────────────────────────────
 
@@ -281,10 +305,82 @@ export default function GamePage() {
   // ── derived state ─────────────────────────────────────────────────────────
 
   const me = players.find((p) => p.id === myPlayerId);
+  const isHost = me?.is_host ?? false;
   const president = players.find((p) => p.id === round?.president_id);
   const isPresident = myPlayerId === round?.president_id;
   const mySubmission = submissions.find((s) => s.player_id === myPlayerId);
   const hasSubmitted = !!mySubmission;
+
+  // ── bot automation ────────────────────────────────────────────────────────
+
+  // Reset acted set on new round so bots can act again
+  useEffect(() => {
+    botActionsRef.current = new Set();
+  }, [round?.id]);
+
+  // Bot submissions: when submitting phase starts, have bots submit after a delay
+  useEffect(() => {
+    if (!isHost || !round || round.status !== 'submitting') return;
+
+    const bots = players.filter((p) => p.is_bot && p.id !== round.president_id);
+    if (bots.length === 0) return;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    bots.forEach((bot, index) => {
+      const key = `submit-${round.id}-${bot.id}`;
+      if (botActionsRef.current.has(key)) return;
+      if (submissions.some((s) => s.player_id === bot.id)) return;
+
+      botActionsRef.current.add(key);
+      const delay =
+        BOT_SUBMIT_BASE_DELAY_MS +
+        index * BOT_SUBMIT_STAGGER_MS +
+        Math.random() * BOT_SUBMIT_JITTER_MS;
+      const t = setTimeout(async () => {
+        await fetch('/api/party/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roundId: round.id,
+            playerId: bot.id,
+            youtubeUrl: pickBotUrl(),
+          }),
+        });
+      }, delay);
+      timers.push(t);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [round, isHost, players, submissions]);
+
+  // Bot president: when judging phase starts and president is a bot, pick a winner
+  useEffect(() => {
+    if (!isHost || !round || round.status !== 'judging') return;
+
+    const presidentPlayer = players.find((p) => p.id === round.president_id);
+    if (!presidentPlayer?.is_bot) return;
+    if (submissions.length === 0) return;
+
+    const key = `judge-${round.id}`;
+    if (botActionsRef.current.has(key)) return;
+    botActionsRef.current.add(key);
+
+    const t = setTimeout(async () => {
+      const winner = submissions[Math.floor(Math.random() * submissions.length)];
+      await fetch('/api/party/judge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roundId: round.id,
+          presidentId: round.president_id,
+          winnerId: winner.player_id,
+        }),
+      });
+    }, BOT_JUDGE_BASE_DELAY_MS + Math.random() * BOT_JUDGE_JITTER_MS);
+
+    return () => clearTimeout(t);
+  }, [round, submissions, isHost, players]);
 
   // ── loading ───────────────────────────────────────────────────────────────
 

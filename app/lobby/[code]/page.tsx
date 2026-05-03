@@ -17,6 +17,7 @@ export default function LobbyPage() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [addingBot, setAddingBot] = useState(false);
 
   const loadData = useCallback(async () => {
     const { data: lobbyData } = await supabase
@@ -129,6 +130,25 @@ export default function LobbyPage() {
     });
   }
 
+  async function handleAddBot() {
+    if (!lobby || !myPlayerId) return;
+    setAddingBot(true);
+    setError('');
+    try {
+      const res = await fetch('/api/party/add-bot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lobbyId: lobby.id, playerId: myPlayerId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to add bot');
+    } finally {
+      setAddingBot(false);
+    }
+  }
+
   const me = players.find((p) => p.id === myPlayerId);
   const isHost = me?.is_host ?? false;
 
@@ -211,10 +231,15 @@ export default function LobbyPage() {
                 key={p.id}
                 className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/5"
               >
-                <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0077ff] to-[#00c2ff] flex items-center justify-center text-xs font-bold shrink-0">
-                  {p.name[0]?.toUpperCase() ?? '?'}
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${p.is_bot ? 'bg-white/10 border border-white/20' : 'bg-gradient-to-br from-[#0077ff] to-[#00c2ff]'}`}>
+                  {p.is_bot ? '🤖' : (p.name[0]?.toUpperCase() ?? '?')}
                 </span>
                 <span className="flex-1 text-sm font-medium">{p.name}</span>
+                {p.is_bot && (
+                  <span className="text-xs text-white/40 border border-white/15 rounded-full px-2 py-0.5">
+                    Bot
+                  </span>
+                )}
                 {p.is_host && (
                   <span className="text-xs text-[#ffb347] border border-[#ffb347]/30 rounded-full px-2 py-0.5">
                     Host
@@ -241,13 +266,22 @@ export default function LobbyPage() {
         )}
 
         {isHost ? (
-          <button
-            onClick={handleStart}
-            disabled={starting || players.length < 2}
-            className="w-full py-4 px-6 rounded-2xl font-black text-base bg-gradient-to-r from-[#0077ff] via-[#00a6ff] to-[#00c2ff] hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-[#00a6ff]/30"
-          >
-            {starting ? 'Starting...' : '🎮 Start Game'}
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={handleAddBot}
+              disabled={addingBot || players.length >= (lobby.max_players ?? 8)}
+              className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-white/70"
+            >
+              {addingBot ? 'Adding...' : '🤖 Add Bot'}
+            </button>
+            <button
+              onClick={handleStart}
+              disabled={starting || players.length < 2}
+              className="w-full py-4 px-6 rounded-2xl font-black text-base bg-gradient-to-r from-[#0077ff] via-[#00a6ff] to-[#00c2ff] hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-[#00a6ff]/30"
+            >
+              {starting ? 'Starting...' : '🎮 Start Game'}
+            </button>
+          </div>
         ) : (
           <p className="text-center text-white/40 text-sm">
             Waiting for the host to start the game...
