@@ -85,6 +85,7 @@ export default function GamePage() {
   const [timer, setTimer] = useState(SUBMIT_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const botActionsRef = useRef<Set<string>>(new Set());
+  const botSubmitTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // ── initial load ──────────────────────────────────────────────────────────
 
@@ -313,24 +314,25 @@ export default function GamePage() {
 
   // ── bot automation ────────────────────────────────────────────────────────
 
-  // Reset acted set on new round so bots can act again
+  // Reset acted set and cancel pending bot timers on new round so bots can act again
   useEffect(() => {
     botActionsRef.current = new Set();
+    botSubmitTimersRef.current.forEach((t) => clearTimeout(t));
+    botSubmitTimersRef.current.clear();
   }, [round?.id]);
 
-  // Bot submissions: when submitting phase starts, have bots submit after a delay
+  // Bot submissions: when submitting phase starts, have bots submit after a delay.
+  // Timers are stored in botSubmitTimersRef so they are not cancelled when
+  // the submissions list updates (which would prevent later bots from firing).
   useEffect(() => {
     if (!isHost || !round || round.status !== 'submitting') return;
 
     const bots = players.filter((p) => p.is_bot && p.id !== round.president_id);
     if (bots.length === 0) return;
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
     bots.forEach((bot, index) => {
       const key = `submit-${round.id}-${bot.id}`;
       if (botActionsRef.current.has(key)) return;
-      if (submissions.some((s) => s.player_id === bot.id)) return;
 
       botActionsRef.current.add(key);
       const delay =
@@ -347,12 +349,16 @@ export default function GamePage() {
             youtubeUrl: pickBotUrl(),
           }),
         });
+        botSubmitTimersRef.current.delete(key);
       }, delay);
-      timers.push(t);
+      botSubmitTimersRef.current.set(key, t);
     });
-
-    return () => timers.forEach(clearTimeout);
-  }, [round, isHost, players, submissions]);
+  // `submissions` is intentionally omitted from deps: including it would cause
+  // React to run the cleanup (clearing pending timers) every time a bot submits,
+  // which would prevent the remaining bots from ever firing. Duplicate submissions
+  // are prevented by botActionsRef and the DB unique constraint on (round_id, player_id).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round?.id, round?.status, isHost, players]);
 
   // Bot president: when judging phase starts and president is a bot, pick a winner
   useEffect(() => {
@@ -638,10 +644,7 @@ export default function GamePage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {submissions.map((sub) => {
-                    const submitter = players.find(
-                      (p) => p.id === sub.player_id
-                    );
+                  {submissions.map((sub, subIndex) => {
                     const isChosen = chosenWinnerId === sub.player_id;
                     return (
                       <div
@@ -658,15 +661,12 @@ export default function GamePage() {
                             className="absolute inset-0 w-full h-full"
                             allowFullScreen
                             allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-                            title={`Submission by ${submitter?.name}`}
+                            title={`Video ${subIndex + 1}`}
                           />
                         </div>
                         <div className="p-4 space-y-3">
-                          <p className="text-white/70 text-sm">
-                            Submitted by{' '}
-                            <span className="font-semibold text-white">
-                              {submitter?.name}
-                            </span>
+                          <p className="text-white/70 text-sm font-semibold">
+                            Video {subIndex + 1}
                           </p>
                           {chosenWinnerId ? (
                             <div
