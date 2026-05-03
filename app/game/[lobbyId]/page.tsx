@@ -53,6 +53,12 @@ const BOT_YOUTUBE_URLS = [
   'https://www.youtube.com/watch?v=kffacxfA7G4',
 ];
 
+const BOT_SUBMIT_BASE_DELAY_MS = 2000;
+const BOT_SUBMIT_STAGGER_MS = 1500;
+const BOT_SUBMIT_JITTER_MS = 2000;
+const BOT_JUDGE_BASE_DELAY_MS = 3000;
+const BOT_JUDGE_JITTER_MS = 2000;
+
 function pickBotUrl(): string {
   return BOT_YOUTUBE_URLS[Math.floor(Math.random() * BOT_YOUTUBE_URLS.length)];
 }
@@ -327,7 +333,10 @@ export default function GamePage() {
       if (submissions.some((s) => s.player_id === bot.id)) return;
 
       botActionsRef.current.add(key);
-      const delay = 2000 + index * 1500 + Math.random() * 2000;
+      const delay =
+        BOT_SUBMIT_BASE_DELAY_MS +
+        index * BOT_SUBMIT_STAGGER_MS +
+        Math.random() * BOT_SUBMIT_JITTER_MS;
       const t = setTimeout(async () => {
         await fetch('/api/party/submit', {
           method: 'POST',
@@ -343,8 +352,7 @@ export default function GamePage() {
     });
 
     return () => timers.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round?.id, round?.status, isHost]);
+  }, [round, isHost, players, submissions]);
 
   // Bot president: when judging phase starts and president is a bot, pick a winner
   useEffect(() => {
@@ -369,11 +377,10 @@ export default function GamePage() {
           winnerId: winner.player_id,
         }),
       });
-    }, 3000 + Math.random() * 2000);
+    }, BOT_JUDGE_BASE_DELAY_MS + Math.random() * BOT_JUDGE_JITTER_MS);
 
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round?.id, round?.status, submissions.length, isHost]);
+  }, [round, submissions, isHost, players]);
 
   // ── loading ───────────────────────────────────────────────────────────────
 
