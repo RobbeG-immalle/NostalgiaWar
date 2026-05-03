@@ -353,6 +353,10 @@ export default function GamePage() {
       }, delay);
       botSubmitTimersRef.current.set(key, t);
     });
+  // `submissions` is intentionally omitted from deps: including it would cause
+  // React to run the cleanup (clearing pending timers) every time a bot submits,
+  // which would prevent the remaining bots from ever firing. Duplicate submissions
+  // are prevented by botActionsRef and the DB unique constraint on (round_id, player_id).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round?.id, round?.status, isHost, players]);
 
