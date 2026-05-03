@@ -1,0 +1,17 @@
+export const PARTY_PROMPTS: string[] = [
+  'Best nostalgic 2000s song',
+  'Most iconic cartoon intro',
+  'Most legendary gaming moment',
+  'Song that instantly brings back memories',
+  'Most nostalgic movie scene',
+  'Best 90s TV show theme song',
+  'Most iconic video game soundtrack',
+  'Best childhood movie',
+  'Most iconic 2000s music video',
+  'Best retro commercial jingle',
+  'Most legendary sports moment',
+  'Best animated movie ever',
+  'Song that defined your childhood',
+  'Most iconic movie soundtrack',
+  'Best throwback music video',
+];
